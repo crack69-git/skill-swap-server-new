@@ -26,6 +26,9 @@ export async function connectToMongoDB() {
   }
 }
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the Skillswap API!");
+});
 export async function disconnectFromMongoDB() {
   await client.close();
 }
