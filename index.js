@@ -34,6 +34,13 @@ async function run() {
       const result = await tasksCollection.insertOne(task);
       res.send(result);
     });
+    app.get("/api/task/get", async (req, res) => {
+      const result = await tasksCollection
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
