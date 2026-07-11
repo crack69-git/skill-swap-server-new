@@ -61,7 +61,51 @@ async function run() {
     // getAllUsers
     app.get("/api/user/allusers", async (req, res) => {
       try {
-        const result = await usersCollection.find({}).toArray();
+        const result = await usersCollection
+          .find({})
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // getAllTasks
+    app.get("/api/task/alltasks", async (req, res) => {
+      try {
+        const result = await tasksCollection
+          .find({})
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    //patchTaskById
+    app.patch("/api/task/patch/:id", async (req, res) => {
+      try {
+        const taskId = req.params.id;
+        const updatedTask = req.body;
+        const result = await tasksCollection.updateOne(
+          { _id: new ObjectId(taskId) },
+          { $set: updatedTask },
+        );
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // ddeleteTaskById
+    app.delete("/api/task/delete/:id", async (req, res) => {
+      try {
+        const taskId = req.params.id;
+        const result = await tasksCollection.deleteOne({
+          _id: new ObjectId(taskId),
+        });
         res.send(result);
       } catch (err) {
         res.status(500).send("Internal Server Error");
