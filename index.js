@@ -28,6 +28,7 @@ async function run() {
     // await client.connect();
     const database = client.db(process.env.MONGODB_DB_NAME);
     const tasksCollection = database.collection("tasks");
+    const usersCollection = database.collection("user");
     // PostATask - task.js
     app.post("/api/task/post", async (req, res) => {
       const task = req.body;
@@ -44,13 +45,23 @@ async function run() {
     // getTaskById
     app.get("/api/task/get/byClient/:id", async (req, res) => {
       try {
-        const id = req.params.clientId;
+        const userId = req.params.id;
         const result = await tasksCollection
           .find({
-            clientId: clientId,
+            clientId: userId,
           })
           .sort({ createdAt: -1 })
           .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // getAllUsers
+    app.get("/api/user/allusers", async (req, res) => {
+      try {
+        const result = await usersCollection.find({}).toArray();
         res.send(result);
       } catch (err) {
         res.status(500).send("Internal Server Error");
