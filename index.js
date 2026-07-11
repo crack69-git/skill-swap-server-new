@@ -28,7 +28,7 @@ async function run() {
     // await client.connect();
     const database = client.db(process.env.MONGODB_DB_NAME);
     const tasksCollection = database.collection("tasks");
-
+    // PostATask - task.js
     app.post("/api/task/post", async (req, res) => {
       const task = req.body;
       const result = await tasksCollection.insertOne(task);
@@ -40,6 +40,21 @@ async function run() {
         .sort({ createdAt: -1 })
         .toArray();
       res.send(result);
+    });
+    // getTaskById
+    app.get("/api/task/get/byClient/:id", async (req, res) => {
+      try {
+        const id = req.params.clientId;
+        const result = await tasksCollection
+          .find({
+            clientId: clientId,
+          })
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
