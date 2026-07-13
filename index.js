@@ -148,7 +148,7 @@ async function run() {
     app.get("/api/task/featureTaskSix", async (req, res) => {
       try {
         const result = await tasksCollection
-          .find({ status: "Open" })
+          .find({ status: "Open", state: "accepted" })
           .sort({
             createdAt: -1,
           })
