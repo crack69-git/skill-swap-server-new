@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const database = client.db(process.env.MONGODB_DB_NAME);
     const tasksCollection = database.collection("tasks");
     const usersCollection = database.collection("user");
@@ -112,7 +112,55 @@ async function run() {
       }
     });
 
-    await client.db("admin").command({ ping: 1 });
+    // browseOpenTasks
+
+    app.get("/api/task/browseOpenTasks", async (req, res) => {
+      try {
+        const { name, skill, page = 1, limit = 9 } = req.query;
+        console.log("Query parameters:", req.query);
+        const filter = {
+          status: "Open",
+          state: "accepted",
+        };
+        if (name) {
+          filter.TaskTitle = { $regex: name, $options: "i" };
+        }
+        if (skill) {
+          filter.category = skill;
+        }
+        const pageNum = parseInt(page, 10) || 1;
+        const limitNum = parseInt(limit, 10) || 9;
+        const skipNum = (pageNum - 1) * limitNum;
+        const totalItems = await tasksCollection.countDocuments(filter);
+        const result = await tasksCollection
+          .find(filter)
+          .sort({ createdAt: -1 })
+          .skip(skipNum)
+          .limit(limitNum)
+          .toArray();
+        res.send({ tasks: result, totalItems });
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    //FeatureTaskSix
+    app.get("/api/task/featureTaskSix", async (req, res) => {
+      try {
+        const result = await tasksCollection
+          .find({ status: "Open" })
+          .sort({
+            createdAt: -1,
+          })
+          .limit(6)
+          .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
