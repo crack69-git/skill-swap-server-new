@@ -29,6 +29,7 @@ async function run() {
     const database = client.db(process.env.MONGODB_DB_NAME);
     const tasksCollection = database.collection("tasks");
     const usersCollection = database.collection("user");
+    const proposalsCollection = database.collection("proposals");
     // PostATask - task.js
     app.post("/api/task/post", async (req, res) => {
       const task = req.body;
@@ -154,6 +155,41 @@ async function run() {
           })
           .limit(6)
           .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // getSingleTaskById
+    app.get("/api/task/getSingleTaskById/:id", async (req, res) => {
+      try {
+        const taskId = req.params.id;
+        const result = await tasksCollection.findOne({
+          _id: new ObjectId(taskId),
+        });
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // postTaskProposal
+    app.post("/api/task/postTaskProposal", async (req, res) => {
+      try {
+        const proposalData = req.body;
+        console.log("Received proposal data:", proposalData);
+        const result = await proposalsCollection.insertOne(proposalData);
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // getTaskProposals
+    app.get("/api/task/getTaskProposals", async (req, res) => {
+      try {
+        const result = await proposalsCollection.find({}).toArray();
         res.send(result);
       } catch (err) {
         res.status(500).send("Internal Server Error");
