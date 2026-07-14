@@ -212,6 +212,37 @@ async function run() {
       }
     });
 
+    // getProposalByClientId
+    app.get("/api/task/getProposalByClientId/:id", async (req, res) => {
+      try {
+        const clientId = req.params.id;
+        const result = await proposalsCollection
+          .find({
+            clientId: clientId,
+          })
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // patchTaskProposalById
+    app.patch("/api/task/patchTaskProposalById/:id", async (req, res) => {
+      try {
+        const proposalId = req.params.id;
+        const updatedProposal = req.body;
+        const result = await proposalsCollection.updateOne(
+          { _id: new ObjectId(proposalId) },
+          { $set: updatedProposal },
+        );
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
