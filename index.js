@@ -196,6 +196,22 @@ async function run() {
       }
     });
 
+    // getTaskProposalsByEmail
+    app.get("/api/task/getTaskProposalsByEmail/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        const result = await proposalsCollection
+          .find({
+            freelancerMail: email,
+          })
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
