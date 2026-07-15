@@ -12,6 +12,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000;
 const uri = process.env.MONGODB_URI;
 
@@ -30,6 +33,7 @@ async function run() {
     const tasksCollection = database.collection("tasks");
     const usersCollection = database.collection("user");
     const proposalsCollection = database.collection("proposals");
+    const paymentsCollection = database.collection("payments");
     // PostATask - task.js
     app.post("/api/task/post", async (req, res) => {
       const task = req.body;
@@ -240,6 +244,105 @@ async function run() {
         res.send(result);
       } catch (err) {
         res.status(500).send("Internal Server Error");
+      }
+    });
+
+    // postTaskPayment
+    app.post("/api/task/postTaskPayment", async (req, res) => {
+      try {
+        const paymentData = req.body;
+
+        if (!paymentData.proposalId) {
+          return res.status(400).json({
+            success: false,
+            message: "proposalId is required",
+          });
+        }
+
+        const existingPayment = await paymentsCollection.findOne({
+          proposalId: paymentData.proposalId,
+        });
+
+        if (existingPayment) {
+          return res.status(409).json({
+            success: false,
+            message: "Payment already exists for this proposal",
+          });
+        }
+
+        const result = await paymentsCollection.insertOne(paymentData);
+
+        res.status(201).json({
+          success: true,
+          insertedId: result.insertedId,
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({
+          success: false,
+          message: "Internal Server Error",
+        });
+      }
+    });
+
+    // checkout-session
+    app.post("/api/create-checkout-session", async (req, res) => {
+      try {
+        console.log("Checkout endpoint called");
+        console.log("Body:", req.body);
+        console.log("Stripe key exists:", !!process.env.STRIPE_SECRET_KEY);
+        const { proposalId } = req.body;
+        console.log("Proposal ID received:", proposalId);
+
+        const proposal = await proposalsCollection.findOne({
+          _id: new ObjectId(proposalId),
+        });
+        console.log("Proposal found:", proposal);
+        if (!proposal) {
+          return res.status(404).json({
+            message: "Proposal not found",
+          });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          payment_method_types: ["card"],
+
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: proposal.taskTitle,
+                },
+                unit_amount: proposal.bid * 100,
+              },
+              quantity: 1,
+            },
+          ],
+
+          metadata: {
+            proposalId: proposal._id.toString(),
+            taskId: proposal.taskId.toString(),
+            taskTitle: proposal.taskTitle.toString(),
+            clientId: proposal.clientId.toString(),
+            freelancerMail: proposal.freelancerMail.toString(),
+            deadline: proposal.estimateDeliveryDate.toString(),
+          },
+
+          success_url: `${process.env.BASE_URL_CLIENT}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${process.env.BASE_URL_CLIENT}/unsuccessful`,
+        });
+
+        res.json({
+          url: session.url,
+        });
+      } catch (err) {
+        console.log(err);
+
+        res.status(500).json({
+          message: err.message,
+        });
       }
     });
 
