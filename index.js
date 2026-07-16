@@ -224,7 +224,7 @@ async function run() {
           .find({
             clientId: clientId,
           })
-          .sort({ createdAt: -1 })
+          .sort({ currentDate: -1 })
           .toArray();
         res.send(result);
       } catch (err) {
@@ -284,6 +284,25 @@ async function run() {
         });
       }
     });
+
+    //getInPendingProposalByEmail
+    app.get(
+      "/api/task/getInPendingProposalByEmail/:email",
+      async (req, res) => {
+        try {
+          const email = req.params.email;
+          const result = await proposalsCollection
+            .find({
+              freelancerMail: email,
+              status: "in-progress",
+            })
+            .toArray();
+          res.send(result);
+        } catch (err) {
+          res.status(500).send("Internal Server Error");
+        }
+      },
+    );
 
     // checkout-session
     app.post("/api/create-checkout-session", async (req, res) => {
