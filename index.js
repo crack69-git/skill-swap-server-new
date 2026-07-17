@@ -304,6 +304,41 @@ async function run() {
       },
     );
 
+    // getFreelancerPaymentByEmail
+    app.get(
+      "/api/task/getFreelancerPaymentByEmail/:email",
+      async (req, res) => {
+        try {
+          const email = req.params.email;
+          const result = await paymentsCollection
+            .find({
+              freelancerMail: email,
+            })
+            .toArray();
+          res.send(result);
+        } catch (err) {
+          res.status(500).send("Internal Server Error");
+        }
+      },
+    );
+
+    //patchUserInfoById
+    app.patch("/api/user/patchUserInfoById/:id", async (req, res) => {
+      try {
+        const userId = req.params.id;
+        const updatedUser = req.body;
+        console.log("Updating user with ID:", userId);
+        console.log("Updated user data:", updatedUser);
+        const result = await usersCollection.updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: updatedUser },
+        );
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     // checkout-session
     app.post("/api/create-checkout-session", async (req, res) => {
       try {
