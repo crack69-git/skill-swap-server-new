@@ -354,6 +354,35 @@ async function run() {
       }
     });
 
+    // getAllFreelancers
+    app.get("/api/user/freelancer/all", async (req, res) => {
+      try {
+        const { name, skill } = req.query;
+        console.log("Query parameters:", req.query);
+
+        const filter = {
+          role: "freelancer",
+        };
+
+        if (name) {
+          filter.name = {
+            $regex: name,
+            $options: "i",
+          };
+        }
+
+        if (skill) {
+          filter.skills = skill;
+        }
+
+        const result = await usersCollection.find(filter).toArray();
+
+        res.send(result);
+      } catch (err) {
+        res.status(500).send({ error: err.message });
+      }
+    });
+
     // checkout-session
     app.post("/api/create-checkout-session", async (req, res) => {
       try {
