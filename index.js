@@ -339,6 +339,21 @@ async function run() {
       }
     });
 
+    // getAllPayments
+    app.get("/api/task/getAllPayments/admin", async (req, res) => {
+      try {
+        const result = await paymentsCollection
+          .find({})
+          .sort({
+            paymentDate: -1,
+          })
+          .toArray();
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     // checkout-session
     app.post("/api/create-checkout-session", async (req, res) => {
       try {
