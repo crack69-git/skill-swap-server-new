@@ -18,6 +18,31 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 const uri = process.env.MONGODB_URI;
 
+import * as jose from "jose-cjs";
+const JWKS = jose.createRemoteJWKSet(
+  new URL(`${process.env.BASE_URL_CLIENT}/api/auth/jwks`),
+);
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Token missing" });
+  }
+  try {
+    const { payload } = await jose.jwtVerify(token, JWKS);
+
+    req.user = payload;
+    next();
+  } catch (err) {
+    console.error(err);
+    return res.status(401).json({ message: "Invalid token" });
+  }
+};
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -64,7 +89,7 @@ async function run() {
     });
 
     // getAllUsers
-    app.get("/api/user/allusers", async (req, res) => {
+    app.get("/api/user/allusers", verifyToken, async (req, res) => {
       try {
         const result = await usersCollection
           .find({})
@@ -77,7 +102,7 @@ async function run() {
     });
 
     // getAllTasks
-    app.get("/api/task/alltasks", async (req, res) => {
+    app.get("/api/task/alltasks", verifyToken, async (req, res) => {
       try {
         const result = await tasksCollection
           .find({})
