@@ -383,6 +383,64 @@ async function run() {
       }
     });
 
+    // getAllFreelancer with most work done
+    app.get("/api/user/freelancer/mostWorkDone", async (req, res) => {
+      try {
+        const result = await paymentsCollection
+          .aggregate([
+            {
+              $group: {
+                _id: "$freelancerMail",
+                total: { $sum: "$amount_received" },
+                workDone: { $sum: 1 },
+              },
+            },
+
+            {
+              $sort: {
+                workDone: -1,
+              },
+            },
+
+            {
+              $limit: 5,
+            },
+
+            {
+              $lookup: {
+                from: "user", // your actual users collection name
+                localField: "_id",
+                foreignField: "email",
+                as: "user",
+              },
+            },
+
+            {
+              $unwind: "$user",
+            },
+
+            {
+              $project: {
+                _id: 0,
+
+                // Payment statistics
+                total: 1,
+                workDone: 1,
+
+                // User data
+                user: 1,
+              },
+            },
+          ])
+          .toArray();
+
+        res.send(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     // checkout-session
     app.post("/api/create-checkout-session", async (req, res) => {
       try {
