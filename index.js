@@ -365,7 +365,7 @@ async function run() {
     });
 
     // getAllPayments
-    app.get("/api/task/getAllPayments/admin", async (req, res) => {
+    app.get("/api/task/getAllPayments/admin", verifyToken, async (req, res) => {
       try {
         const result = await paymentsCollection
           .find({})
