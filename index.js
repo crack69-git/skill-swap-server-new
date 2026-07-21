@@ -60,7 +60,7 @@ async function run() {
     const proposalsCollection = database.collection("proposals");
     const paymentsCollection = database.collection("payments");
     // PostATask - task.js
-    app.post("/api/task/post", async (req, res) => {
+    app.post("/api/task/post", verifyToken, async (req, res) => {
       const task = req.body;
       const result = await tasksCollection.insertOne(task);
       res.send(result);
@@ -73,7 +73,7 @@ async function run() {
       res.send(result);
     });
     // getTaskById
-    app.get("/api/task/get/byClient/:id", async (req, res) => {
+    app.get("/api/task/get/byClient/:id", verifyToken, async (req, res) => {
       try {
         const userId = req.params.id;
         const result = await tasksCollection
@@ -242,35 +242,43 @@ async function run() {
     });
 
     // getProposalByClientId
-    app.get("/api/task/getProposalByClientId/:id", async (req, res) => {
-      try {
-        const clientId = req.params.id;
-        const result = await proposalsCollection
-          .find({
-            clientId: clientId,
-          })
-          .sort({ currentDate: -1 })
-          .toArray();
-        res.send(result);
-      } catch (err) {
-        res.status(500).send("Internal Server Error");
-      }
-    });
+    app.get(
+      "/api/task/getProposalByClientId/:id",
+      verifyToken,
+      async (req, res) => {
+        try {
+          const clientId = req.params.id;
+          const result = await proposalsCollection
+            .find({
+              clientId: clientId,
+            })
+            .sort({ currentDate: -1 })
+            .toArray();
+          res.send(result);
+        } catch (err) {
+          res.status(500).send("Internal Server Error");
+        }
+      },
+    );
 
     // patchTaskProposalById
-    app.patch("/api/task/patchTaskProposalById/:id", async (req, res) => {
-      try {
-        const proposalId = req.params.id;
-        const updatedProposal = req.body;
-        const result = await proposalsCollection.updateOne(
-          { _id: new ObjectId(proposalId) },
-          { $set: updatedProposal },
-        );
-        res.send(result);
-      } catch (err) {
-        res.status(500).send("Internal Server Error");
-      }
-    });
+    app.patch(
+      "/api/task/patchTaskProposalById/:id",
+      verifyToken,
+      async (req, res) => {
+        try {
+          const proposalId = req.params.id;
+          const updatedProposal = req.body;
+          const result = await proposalsCollection.updateOne(
+            { _id: new ObjectId(proposalId) },
+            { $set: updatedProposal },
+          );
+          res.send(result);
+        } catch (err) {
+          res.status(500).send("Internal Server Error");
+        }
+      },
+    );
 
     // postTaskPayment
     app.post("/api/task/postTaskPayment", async (req, res) => {
@@ -469,11 +477,7 @@ async function run() {
     // checkout-session
     app.post("/api/create-checkout-session", async (req, res) => {
       try {
-        console.log("Checkout endpoint called");
-        console.log("Body:", req.body);
-        console.log("Stripe key exists:", !!process.env.STRIPE_SECRET_KEY);
         const { proposalId } = req.body;
-        console.log("Proposal ID received:", proposalId);
 
         const proposal = await proposalsCollection.findOne({
           _id: new ObjectId(proposalId),
