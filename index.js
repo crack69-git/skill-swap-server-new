@@ -59,6 +59,21 @@ async function run() {
     const usersCollection = database.collection("user");
     const proposalsCollection = database.collection("proposals");
     const paymentsCollection = database.collection("payments");
+
+    // getFreelancerById
+    app.get("/api/user/freelancer/:id", verifyToken, async (req, res) => {
+      try {
+        const userId = req.params.id;
+        const result = await usersCollection.findOne({
+          _id: new ObjectId(userId),
+          role: "freelancer",
+        });
+        res.send(result);
+      } catch (err) {
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
     // PostATask - task.js
     app.post("/api/task/post", verifyToken, async (req, res) => {
       const task = req.body;
@@ -398,10 +413,9 @@ async function run() {
     });
 
     // getAllFreelancers
-    app.get("/api/user/freelancer/all", async (req, res) => {
+    app.get("/api/user/freelancer/get/all", async (req, res) => {
       try {
         const { name, skill } = req.query;
-        console.log("Query parameters:", req.query);
 
         const filter = {
           role: "freelancer",
