@@ -115,7 +115,7 @@ async function run() {
     });
 
     //patchTaskById
-    app.patch("/api/task/patch/:id", async (req, res) => {
+    app.patch("/api/task/patch/:id", verifyToken, async (req, res) => {
       try {
         const taskId = req.params.id;
         const updatedTask = req.body;
@@ -129,8 +129,8 @@ async function run() {
       }
     });
 
-    // ddeleteTaskById
-    app.delete("/api/task/delete/:id", async (req, res) => {
+    // deleteTaskById
+    app.delete("/api/task/delete/:id", verifyToken, async (req, res) => {
       try {
         const taskId = req.params.id;
         const result = await tasksCollection.deleteOne({
@@ -204,7 +204,7 @@ async function run() {
     });
 
     // postTaskProposal
-    app.post("/api/task/postTaskProposal", async (req, res) => {
+    app.post("/api/task/postTaskProposal", verifyToken, async (req, res) => {
       try {
         const proposalData = req.body;
         console.log("Received proposal data:", proposalData);
@@ -216,7 +216,7 @@ async function run() {
     });
 
     // getTaskProposals
-    app.get("/api/task/getTaskProposals", async (req, res) => {
+    app.get("/api/task/getTaskProposals", verifyToken, async (req, res) => {
       try {
         const result = await proposalsCollection.find({}).toArray();
         res.send(result);
@@ -226,20 +226,24 @@ async function run() {
     });
 
     // getTaskProposalsByEmail
-    app.get("/api/task/getTaskProposalsByEmail/:email", async (req, res) => {
-      try {
-        const email = req.params.email;
-        const result = await proposalsCollection
-          .find({
-            freelancerMail: email,
-          })
-          .sort({ createdAt: -1 })
-          .toArray();
-        res.send(result);
-      } catch (err) {
-        res.status(500).send("Internal Server Error");
-      }
-    });
+    app.get(
+      "/api/task/getTaskProposalsByEmail/:email",
+      verifyToken,
+      async (req, res) => {
+        try {
+          const email = req.params.email;
+          const result = await proposalsCollection
+            .find({
+              freelancerMail: email,
+            })
+            .sort({ createdAt: -1 })
+            .toArray();
+          res.send(result);
+        } catch (err) {
+          res.status(500).send("Internal Server Error");
+        }
+      },
+    );
 
     // getProposalByClientId
     app.get(
@@ -281,7 +285,7 @@ async function run() {
     );
 
     // postTaskPayment
-    app.post("/api/task/postTaskPayment", async (req, res) => {
+    app.post("/api/task/postTaskPayment", verifyToken, async (req, res) => {
       try {
         const paymentData = req.body;
 
@@ -321,6 +325,7 @@ async function run() {
     //getInPendingProposalByEmail
     app.get(
       "/api/task/getInPendingProposalByEmail/:email",
+      verifyToken,
       async (req, res) => {
         try {
           const email = req.params.email;
@@ -340,6 +345,7 @@ async function run() {
     // getFreelancerPaymentByEmail
     app.get(
       "/api/task/getFreelancerPaymentByEmail/:email",
+      verifyToken,
       async (req, res) => {
         try {
           const email = req.params.email;
@@ -356,21 +362,25 @@ async function run() {
     );
 
     //patchUserInfoById
-    app.patch("/api/user/patchUserInfoById/:id", async (req, res) => {
-      try {
-        const userId = req.params.id;
-        const updatedUser = req.body;
-        console.log("Updating user with ID:", userId);
-        console.log("Updated user data:", updatedUser);
-        const result = await usersCollection.updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: updatedUser },
-        );
-        res.send(result);
-      } catch (err) {
-        res.status(500).send("Internal Server Error");
-      }
-    });
+    app.patch(
+      "/api/user/patchUserInfoById/:id",
+      verifyToken,
+      async (req, res) => {
+        try {
+          const userId = req.params.id;
+          const updatedUser = req.body;
+          console.log("Updating user with ID:", userId);
+          console.log("Updated user data:", updatedUser);
+          const result = await usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: updatedUser },
+          );
+          res.send(result);
+        } catch (err) {
+          res.status(500).send("Internal Server Error");
+        }
+      },
+    );
 
     // getAllPayments
     app.get("/api/task/getAllPayments/admin", verifyToken, async (req, res) => {
