@@ -165,7 +165,6 @@ async function run() {
         console.log("Query parameters:", req.query);
         const filter = {
           status: "Open",
-          state: "accepted",
         };
         if (name) {
           filter.TaskTitle = { $regex: name, $options: "i" };
@@ -193,7 +192,7 @@ async function run() {
     app.get("/api/task/featureTaskSix", async (req, res) => {
       try {
         const result = await tasksCollection
-          .find({ status: "Open", state: "accepted" })
+          .find({ status: "Open" })
           .sort({
             createdAt: -1,
           })
